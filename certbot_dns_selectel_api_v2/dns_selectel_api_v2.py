@@ -10,8 +10,20 @@ from certbot import interfaces
 from certbot.plugins import dns_common
 
 from .exceptions import JSONDecodeError
+from http.client import HTTPConnection
 
 logger = logging.getLogger(__name__)
+
+log = logging.getLogger('urllib3')
+log.setLevel(logging.DEBUG)
+
+# logging from urllib3 to console
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+log.addHandler(ch)
+
+# print statements from `http.client.HTTPConnection` to console/stdout
+HTTPConnection.debuglevel = 1
 
 DEFAULT_AUTH_ENDPOINT = "https://cloud.api.selcloud.ru"
 DEFAULT_API_ENDPOINT = "https://api.selectel.ru"
@@ -108,23 +120,7 @@ class _SelectelClient(object):
     def _r(self, method, uri, endpoint=None, *args, **kwargs):
         url = f"{endpoint or self.api_endpoint}{uri}"
         
-        # Log request details
-        logger.debug("Making request: %s %s", method, url)
-        logger.debug("Request headers: %s", kwargs.get('headers', {}))
-        if 'json' in kwargs:
-            logger.debug("Request body: %s", kwargs['json'])
-        if 'params' in kwargs:
-            logger.debug("Request params: %s", kwargs['params'])
-
         resp = self.session.request(method, url, *args, **kwargs)
-        
-        # Log response details
-        logger.debug("Response status: %d", resp.status_code)
-        logger.debug("Response headers: %s", resp.headers)
-        try:
-            logger.debug("Response body: %s", resp.json())
-        except JSONDecodeError:
-            logger.debug("Response body: %s", resp.content)
 
         if resp.status_code >= 300:
             message_parts = [f"API request error: "
