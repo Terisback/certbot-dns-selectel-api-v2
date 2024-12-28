@@ -74,11 +74,9 @@ class Authenticator(dns_common.DNSAuthenticator):
         rrset = self._client.get_zone_rrset_by_name(zone_id, validation_name)
         if rrset:
             rrset_id = rrset["id"]
-            self._client.update_record(
-                zone_id, rrset, validation_name, validation, self.ttl)
-        else:
-            rrset_id = self._client.add_record(
-                zone_id, validation_name, validation, self.ttl)
+            self._client.del_record(zone_id, rrset_id)
+        rrset_id = self._client.add_record(
+            zone_id, validation_name, validation, self.ttl)
         self.__records[validation] = rrset_id
 
     def _cleanup(self, domain, validation_name, validation):
